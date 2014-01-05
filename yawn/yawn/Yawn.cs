@@ -18,18 +18,18 @@ namespace yawn
     {
         const int BoardWidth = 60;
         const int BoardHeight = 40;
-        const int InitialSpeed = 30; // Speed represents number of ticks between worm updates
+        const int InitialSpeed = 15; // Speed represents number of ticks between worm updates
         static int Ticks = 0;
         
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         YawnWorm Worm;
-        Direction InputDirection;
         int Points;
         bool Paused, GameOver;
         float GameSpeed;
         Texture2D Tile, DaklutzLogo, BlankTexture;
         SpriteFont Font;
+        Vector3 Food;
 
         public Yawn()
             : base()
@@ -41,6 +41,7 @@ namespace yawn
             Points = 0;
             Paused = true;
             GameOver = false;
+            Food = new Vector3(0, 0, 1);
         }
 
         /// <summary>
@@ -127,14 +128,46 @@ namespace yawn
                 // Only update as fast as the game is going
                 if (Ticks % GameSpeed == 0)
                 {
+                    Ticks = 0;
                     if (Worm.Update(gameTime, Dirs) == false)
                     {
                         GameOver = true;
                     }
+
                 }
 
                 // check for collision with the walls
-                //if(Worm.Posit
+                if (Worm.Position.X <= 0 || Worm.Position.X >= BoardWidth || Worm.Position.Y <= 0 || Worm.Position.Y >= BoardHeight)
+                {
+                    GameOver = true;
+                }
+
+                // Check for collision with food
+                if (Food.X != 0)
+                {
+                    if (Worm.Position.X == Food.X && Worm.Position.Y == Food.Y)
+                    {
+                        Worm.Eat((int)Food.Z);
+                        Points += (int)Food.Z;
+                        Food.Z++;
+                        Food.X = 0;
+                        // speed up the game
+                        if (GameSpeed > 1 && Food.Z % 4 == 0)
+                        {
+                            GameSpeed--;
+                        }
+                    }
+                }
+                else
+                {
+                    // respawn food
+                    Random random = new Random();
+                    do
+                    {
+                        Food.X = random.Next(1, BoardWidth + 1);
+                        Food.Y = random.Next(1, BoardHeight + 1);
+                    } while (Worm.SectionHere(Food));
+                }
             }
             base.Update(gameTime);
         }
@@ -149,19 +182,44 @@ namespace yawn
 
             // Render the HUD
             spriteBatch.Begin();
-            spriteBatch.DrawString(Font, gameTime.TotalGameTime.ToString(), new Vector2(1, 1), Color.Black);
+            //spriteBatch.DrawString(Font, gameTime.TotalGameTime.ToString(), new Vector2(1, 1), Color.Black);
 
             spriteBatch.DrawString(Font, "GameOver: " + GameOver.ToString(), new Vector2(1, BoardHeight * 10 + 1), Color.Black);
             spriteBatch.DrawString(Font, "Paused: " + Paused.ToString(), new Vector2(1, BoardHeight * 10 + 14), Color.Black);
             spriteBatch.DrawString(Font, "X: " + Worm.Position.X.ToString(), new Vector2(1, BoardHeight * 10 + 27), Color.Black);
             spriteBatch.DrawString(Font, "Y: " + Worm.Position.Y.ToString(), new Vector2(1, BoardHeight * 10 + 40), Color.Black);
+            spriteBatch.DrawString(Font, "Food.X: " + Food.X.ToString(), new Vector2(100, BoardHeight * 10 + 27), Color.Black);
+            spriteBatch.DrawString(Font, "Food.Y: " + Food.Y.ToString(), new Vector2(100, BoardHeight * 10 + 40), Color.Black);
+            spriteBatch.DrawString(Font, "Food Worth: " + Food.Z.ToString(), new Vector2(100, BoardHeight * 10 + 53), Color.Black);
+            spriteBatch.DrawString(Font, "Points: " + Points.ToString(), new Vector2(1, BoardHeight * 10 + 53), Color.Black);
+
+            // Render the food
+            spriteBatch.Draw(BlankTexture, new Vector2(Food.X * 10.0f, Food.Y * 10.0f), Color.Green);
+
+            // Render the board
+            for (int i = 0; i <= BoardWidth; i++)
+            {
+                for (int j = 0; j <= BoardHeight; j++)
+                {
+                    if (i == 0 ||
+                        i == BoardWidth ||
+                        j == 0 ||
+                        j == BoardHeight)
+                    {
+                        spriteBatch.Draw(BlankTexture, new Vector2(i * 10.0f, j * 10.0f), Color.Black);
+                    }
+                }
+            }
+            
             spriteBatch.End();
 
             // Render the worm
             if (Paused == false)
             {
-                Worm.Draw(gameTime, spriteBatch, Tile);
+                Worm.Draw(gameTime, spriteBatch, BlankTexture);
             }
+
+            // Render the food
 
             base.Draw(gameTime);
         }

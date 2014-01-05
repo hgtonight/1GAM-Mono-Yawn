@@ -20,7 +20,7 @@ namespace yawn
         {
             HeadPosition = new Vector2(30, 20);
             SectionPositions = new List<Vector2>();
-            Length = 2;
+            Length = 1;
             CameFrom = Direction.WEST;
         }
 
@@ -30,10 +30,14 @@ namespace yawn
             }
         }
 
+        public void Eat(int Food)
+        {
+            Length += Food;
+        }
+
         public bool Update(GameTime gameTime, List<Direction> Dirs)
         {
             Vector2 TempPosition = new Vector2(0, 0);
-            // no direction input or no valid direction input
             if (Dirs.Count() > 0)
             {
                 foreach(Direction Dir in Dirs) {
@@ -89,6 +93,18 @@ namespace yawn
             spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * 10.0f, HeadPosition.Y * 10.0f), Color.Red);
 
             spriteBatch.End();
+        }
+
+        public bool SectionHere(Vector3 Food)
+        {
+            if (SectionPositions.Exists(x => x.X == Food.X && x.Y == Food.Y))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
