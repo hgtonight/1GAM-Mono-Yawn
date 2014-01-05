@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Xna.Framework;
 
 namespace yawn
 {
@@ -63,17 +64,17 @@ namespace yawn
             return new Direction(degrees + 180);
         }
 
-        public Tuple<int, int> Move(Tuple<int, int> Position) {
+        public Vector2 Move(Vector2 Position) {
             switch(ordinal) {
                 default:
                 case 0:
-                    return new Tuple<int, int>(Position.Item1 + 1, Position.Item2);
+                    return new Vector2(Position.X + 1, Position.Y);
                 case 1:
-                    return new Tuple<int, int>(Position.Item1, Position.Item2 - 1);
+                    return new Vector2(Position.X, Position.Y - 1);
                 case 2:
-                    return new Tuple<int, int>(Position.Item1 - 1, Position.Item2);
+                    return new Vector2(Position.X - 1, Position.Y);
                 case 3:
-                    return new Tuple<int, int>(Position.Item1, Position.Item2 + 1);
+                    return new Vector2(Position.X, Position.Y + 1);
             }
                 
         }

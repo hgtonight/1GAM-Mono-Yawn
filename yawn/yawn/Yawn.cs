@@ -18,7 +18,8 @@ namespace yawn
     {
         const int BoardWidth = 60;
         const int BoardHeight = 40;
-        const float InitialSpeed = 1.0f;
+        const int InitialSpeed = 30; // Speed represents number of ticks between worm updates
+        static int Ticks = 0;
         
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -86,6 +87,7 @@ namespace yawn
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            Ticks++;
             // Check for pause
             if (Keyboard.GetState().IsKeyDown(Keys.Space))
             {
@@ -96,6 +98,13 @@ namespace yawn
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 {
                     Exit();
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.Up) ||
+                    Keyboard.GetState().IsKeyDown(Keys.Down) ||
+                    Keyboard.GetState().IsKeyDown(Keys.Left) ||
+                    Keyboard.GetState().IsKeyDown(Keys.Right))
+                {
+                    Paused = false;
                 }
             }
             else if (GameOver == false)
@@ -115,10 +124,17 @@ namespace yawn
                     Dirs.Add(Direction.EAST);
                 }
 
-                if (Worm.Update(gameTime, Dirs) == false)
+                // Only update as fast as the game is going
+                if (Ticks % GameSpeed == 0)
                 {
-                    GameOver = true;
+                    if (Worm.Update(gameTime, Dirs) == false)
+                    {
+                        GameOver = true;
+                    }
                 }
+
+                // check for collision with the walls
+                //if(Worm.Posit
             }
             base.Update(gameTime);
         }
@@ -132,9 +148,20 @@ namespace yawn
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // Render the HUD
+            spriteBatch.Begin();
+            spriteBatch.DrawString(Font, gameTime.TotalGameTime.ToString(), new Vector2(1, 1), Color.Black);
+
+            spriteBatch.DrawString(Font, "GameOver: " + GameOver.ToString(), new Vector2(1, BoardHeight * 10 + 1), Color.Black);
+            spriteBatch.DrawString(Font, "Paused: " + Paused.ToString(), new Vector2(1, BoardHeight * 10 + 14), Color.Black);
+            spriteBatch.DrawString(Font, "X: " + Worm.Position.X.ToString(), new Vector2(1, BoardHeight * 10 + 27), Color.Black);
+            spriteBatch.DrawString(Font, "Y: " + Worm.Position.Y.ToString(), new Vector2(1, BoardHeight * 10 + 40), Color.Black);
+            spriteBatch.End();
 
             // Render the worm
-            Worm.Draw(gameTime, spriteBatch, Tile);
+            if (Paused == false)
+            {
+                Worm.Draw(gameTime, spriteBatch, Tile);
+            }
 
             base.Draw(gameTime);
         }
