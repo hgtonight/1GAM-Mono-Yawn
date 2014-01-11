@@ -226,7 +226,7 @@ namespace yawn
             // Render the worm
             //if (Paused == false)
             //{
-                Worm.Draw(gameTime, spriteBatch, WormTiles);
+                Worm.Draw(gameTime, spriteBatch, WormTiles, Font);
             //}
 
             // Render the food

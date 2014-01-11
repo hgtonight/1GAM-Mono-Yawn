@@ -22,7 +22,7 @@ namespace yawn
         {
             HeadPosition = new Vector2(5, 5);
             SectionPositions = new List<Vector2>();
-            Length = 1;
+            Length = 10;
             CameFrom = Direction.WEST;
             GridSize = TileSize;
             TurnSection = new Rectangle(0 * TileSize, 0, TileSize, TileSize);
@@ -94,46 +94,30 @@ namespace yawn
             }
         }
 
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Texture2D Tile)
+        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Texture2D Tile, SpriteFont Font)
         {
+            SpriteEffects FlipSection;
             Rectangle TileSection = MidSection;
             Direction PrevDir = CameFrom.Opposite();
             float Rotation = 0.0f;
-            SpriteEffects FlipSection = SpriteEffects.None;
-
-            // need to do this outside the loop so the first section is flipped properly
-            if (CameFrom.Degrees() == 90)
-            {
-                FlipSection = SpriteEffects.FlipVertically;
-            }
-
-            spriteBatch.Begin();
             
-            // Draw each section of the worm
-            /*int Count = SectionPositions.Count;
-            Direction PrevDir = CameFrom.Opposite();
-            SpriteEffects FlipSection = SpriteEffects.None;
-            if (CameFrom.Degrees() == 90)
-            {
-                FlipSection = SpriteEffects.FlipVertically;
-            }*/
+            spriteBatch.Begin();
             for (int i = SectionPositions.Count - 1; i >= 0; i--)
             {
-                if (i > 0)
+                // Assume we don't need to flip the tile
+                FlipSection = SpriteEffects.None;
+
+                // Find the rotation by looking at the previous direction
+                Rotation = PrevDir.RotationAngle();
+
+                if (i == 0)
                 {
-                    if (SectionPositions.Count == 2)
-                    {
-                        // Check the head position against the last section position
-                        if (SectionPositions[0].X == HeadPosition.X || SectionPositions[0].Y == HeadPosition.Y)
-                        {
-                            TileSection = MidSection;
-                        }
-                        else
-                        {
-                            TileSection = TurnSection;
-                        }
-                    }
-                    else if (i < SectionPositions.Count - 1)
+                    // if there is no previous position, print the end section
+                    TileSection = EndSection;
+                }
+                else {
+                    
+                    if (i < SectionPositions.Count - 1)
                     {
 
                         if ((SectionPositions[i - 1].X == SectionPositions[i + 1].X) || (SectionPositions[i - 1].Y == SectionPositions[i + 1].Y))
@@ -145,20 +129,29 @@ namespace yawn
                         {
                             // If the previous position and the next position are kitty corner, print a corner
                             TileSection = TurnSection;
+
+                            // Determine if the tile needs to be flipped
+                            Rotation += FindExtraRotation(SectionPositions[i - 1], SectionPositions[i], SectionPositions[i + 1]);
+                        }
+                    }
+                    else
+                    {
+                        // Check the head position against the last section position
+                        if (SectionPositions[i - 1].X == HeadPosition.X || SectionPositions[i - 1].Y == HeadPosition.Y)
+                        {
+                            TileSection = MidSection;
+                        }
+                        else
+                        {
+                            TileSection = TurnSection;
+                            Rotation += FindExtraRotation(SectionPositions[i - 1], SectionPositions[i], HeadPosition);
                         }
                     }
                 }
-                else
-                {
-                    // if there is no previous position, print the end section
-                    TileSection = EndSection;
-                }
-                
-                // Find the rotation by looking at the previous direction
-                Rotation = PrevDir.RotationAngle();
 
                 // Actually print the section with the proper rotation
                 spriteBatch.Draw(Tile, new Vector2(SectionPositions[i].X * GridSize + GridSize / 2, SectionPositions[i].Y * GridSize + GridSize / 2), TileSection, Color.Pink, Rotation, new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipSection, 0.0f);
+                //spriteBatch.DrawString(Font, (i % 10).ToString(), new Vector2(SectionPositions[i].X * GridSize, SectionPositions[i].Y * GridSize), Color.Black);
                 
                 // Save the current direction for next sections rotation calculation
                 if (SectionPositions.Count > 1 && i > 0)
@@ -166,72 +159,110 @@ namespace yawn
                     if (SectionPositions[i].X < SectionPositions[i - 1].X)
                     {
                         PrevDir = Direction.WEST;
-                        FlipSection = SpriteEffects.FlipVertically;
                     }
                     else if (SectionPositions[i].X > SectionPositions[i - 1].X)
                     {
                         PrevDir = Direction.EAST;
-                        FlipSection = SpriteEffects.None;
                     }
                     else if (SectionPositions[i].Y < SectionPositions[i - 1].Y)
                     {
                         PrevDir = Direction.NORTH;
-                        FlipSection = SpriteEffects.None;
                     }
                     else
                     {
                         PrevDir = Direction.SOUTH;
-                        FlipSection = SpriteEffects.None;
                     }
                 }
                 
-
-                // Determine the rotation based on the previous direction
-                /*float Rotation = PrevDir.RotationAngle();
-                if (i == 0)
-                {
-                    spriteBatch.Draw(Tile, new Vector2(SectionPositions[i].X * GridSize + GridSize / 2, SectionPositions[i].Y * GridSize + GridSize / 2), EndSection, Color.Pink, Rotation, new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipSection, 0.0f);
-                }
-                else
-                {
-                    spriteBatch.Draw(Tile, new Vector2(SectionPositions[i].X * GridSize + GridSize / 2, SectionPositions[i].Y * GridSize + GridSize / 2), MidSection, Color.Pink, Rotation, new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipSection, 0.0f);
-                }
-
-                if (SectionPositions.Count > 1 && i > 0)
-                {
-                    if (SectionPositions[i].X < SectionPositions[i - 1].X)
-                    {
-                        PrevDir = Direction.WEST;
-                        FlipSection = SpriteEffects.FlipVertically;
-                    }
-                    else if (SectionPositions[i].X > SectionPositions[i - 1].X)
-                    {
-                        PrevDir = Direction.EAST;
-                        FlipSection = SpriteEffects.None;
-                    }
-                    else if (SectionPositions[i].Y < SectionPositions[i - 1].Y)
-                    {
-                        PrevDir = Direction.NORTH;
-                        FlipSection = SpriteEffects.None;
-                    }
-                    else
-                    {
-                        PrevDir = Direction.SOUTH;
-                        FlipSection = SpriteEffects.None;
-                    }
-                }*/
             }
 
             // Draw the head
             // public void Draw(Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float depth);
-            SpriteEffects Flip = SpriteEffects.None;
+            SpriteEffects FlipHead = SpriteEffects.None;
             if (CameFrom.Degrees() == 90)
             {
-                Flip = SpriteEffects.FlipVertically;
+                FlipHead = SpriteEffects.FlipVertically;
             }
-            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), HeadSection, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, Flip, 0.0f);
+            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), HeadSection, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
 
             spriteBatch.End();
+        }
+
+        private float FindExtraRotation(Vector2 PreviousPos, Vector2 CurrPos, Vector2 NextPos)
+        {
+            // Takes 2 positions that are connected via one point and determine if the turn sprite should be flipped
+            if (PreviousPos.X == NextPos.X || PreviousPos.Y == NextPos.Y)
+            {
+                // This should never actually happen since this function is only called on turn sections
+                return 0.0f;
+            }
+            else if (PreviousPos.X == CurrPos.X)
+            {
+                // Up or down?
+                if (CurrPos.Y < PreviousPos.Y)
+                {
+                    // Left or right?
+                    if (CurrPos.X < NextPos.X)
+                    {
+                        // Moving from bottom to the right
+                        return 0.0f;
+                    }
+                    else
+                    {
+                        // Moving from bottom to the left
+                        return -90.0f * (float)Math.PI / 180.0f;
+                    }
+                }
+                else
+                {
+                    // Left or right?
+                    if (CurrPos.X < NextPos.X)
+                    {
+                        // Moving from top to the right
+                        return -90.0f * (float)Math.PI / 180.0f;
+                    }
+                    else
+                    {
+                        // Moving from top to the left
+                        return 0.0f;
+                    }
+                }
+            }
+            else if(PreviousPos.Y == CurrPos.Y)
+            {
+                // Left or right?
+                if (CurrPos.X < PreviousPos.X)
+                {
+                    // Up or down?
+                    if (CurrPos.Y < NextPos.Y)
+                    {
+                        // Moving from right to bottom
+                        return -90.0f * (float)Math.PI / 180.0f;
+                    }
+                    else
+                    {
+                        // Moving from right to top
+                        return 0.0f;
+                    }
+                }
+                else
+                {
+                    // Up or down?
+                    if (CurrPos.Y < NextPos.Y)
+                    {
+                        // Moving from left to bottom
+                        return 0.0f;
+                    }
+                    else
+                    {
+                        // Moving from left to top
+                        return -90.0f * (float)Math.PI / 180.0f;
+                    }
+                }
+            }
+
+            // This shouldn't happen
+            return 0.0f;
         }
 
         public bool SectionHere(Vector3 Food)
