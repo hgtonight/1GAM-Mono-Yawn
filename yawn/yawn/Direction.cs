@@ -8,10 +8,10 @@ namespace yawn
 {
     class Direction
     {
-        public static Direction EAST = new Direction(0);
-        public static Direction NORTH = new Direction(90);
-        public static Direction WEST = new Direction(180);
-        public static Direction SOUTH = new Direction(270);
+        public static Direction EAST = new Direction(90);
+        public static Direction SOUTH = new Direction(180);
+        public static Direction WEST = new Direction(270);
+        public static Direction NORTH = new Direction(0);
 
         private string name;
         private int ordinal;
@@ -25,16 +25,16 @@ namespace yawn
             switch (ordinal)
             {
                 case 0:
-                    name = "East";
-                    break;
-                case 1:
                     name = "North";
                     break;
+                case 1:
+                    name = "East";
+                    break;
                 case 2:
-                    name = "West";
+                    name = "South";
                     break;
                 case 3:
-                    name = "South";
+                    name = "West";
                     break;
             }
 
@@ -54,6 +54,11 @@ namespace yawn
             return degrees;
         }
 
+        public float RotationAngle()
+        {
+            return ((float)degrees - 90.0f) * (float)Math.PI / 180.0f;
+        }
+
         public Direction Next()
         {
             return new Direction(degrees + 90);
@@ -68,13 +73,13 @@ namespace yawn
             switch(ordinal) {
                 default:
                 case 0:
-                    return new Vector2(Position.X + 1, Position.Y);
-                case 1:
                     return new Vector2(Position.X, Position.Y - 1);
+                case 1:
+                    return new Vector2(Position.X + 1, Position.Y);
                 case 2:
-                    return new Vector2(Position.X - 1, Position.Y);
-                case 3:
                     return new Vector2(Position.X, Position.Y + 1);
+                case 3:
+                    return new Vector2(Position.X - 1, Position.Y);
             }
                 
         }
