@@ -102,6 +102,17 @@ namespace yawn
             float Rotation = 0.0f;
             
             spriteBatch.Begin();
+
+            // Draw the head
+            SpriteEffects FlipHead = SpriteEffects.None;
+            if (CameFrom.Degrees() == 90)
+            {
+                FlipHead = SpriteEffects.FlipVertically;
+            }
+            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), HeadSection, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
+
+
+            // Draw the sections  
             for (int i = SectionPositions.Count - 1; i >= 0; i--)
             {
                 // Assume we don't need to flip the tile
@@ -175,15 +186,6 @@ namespace yawn
                 }
                 
             }
-
-            // Draw the head
-            // public void Draw(Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float depth);
-            SpriteEffects FlipHead = SpriteEffects.None;
-            if (CameFrom.Degrees() == 90)
-            {
-                FlipHead = SpriteEffects.FlipVertically;
-            }
-            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), HeadSection, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
 
             spriteBatch.End();
         }
