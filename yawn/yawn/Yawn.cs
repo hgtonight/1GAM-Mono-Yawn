@@ -16,10 +16,10 @@ namespace yawn
     /// </summary>
     public class Yawn : Game
     {
-        const int BoardWidth = 24;
-        const int BoardHeight = 11;
+        const int BoardWidth = 48;
+        const int BoardHeight = 22;
         const int InitialSpeed = 10; // Speed represents number of ticks between worm updates
-        const int GridSize = 32; // size in pixels each grid section is
+        const int GridSize = 16; // size in pixels each grid section is
         static int Ticks = 0;
         
         GraphicsDeviceManager graphics;
