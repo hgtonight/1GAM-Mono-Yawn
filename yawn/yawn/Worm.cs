@@ -9,26 +9,29 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace yawn
 {
-    class YawnWorm
+    class Worm
     {
         private List<Vector2> SectionPositions; // Where the worm has been
         private Vector2 HeadPosition; // Where the worm is right now
         private int Length; // how many sections there should be
         private Direction CameFrom; // which direction the worm came from
         private int GridSize;
-        private Rectangle HeadSection, MidSection, EndSection, TurnSection;
+        private Rectangle Head, Mid1, Mid2, Tail, Corner;
+        private Color MainColor;
 
-        public YawnWorm(int TileSize)
+        public Worm(int TileSize)
         {
             HeadPosition = new Vector2(5, 5);
             SectionPositions = new List<Vector2>();
             Length = 10;
             CameFrom = Direction.WEST;
             GridSize = TileSize;
-            TurnSection = new Rectangle(0 * TileSize, 0, TileSize, TileSize);
-            MidSection = new Rectangle(1 * TileSize, 0, TileSize, TileSize);
-            EndSection = new Rectangle(2 * TileSize, 0, TileSize, TileSize);
-            HeadSection = new Rectangle(3 * TileSize, 0, TileSize, TileSize);
+            Tail = new Rectangle(2 * GridSize, 0 * GridSize, GridSize, GridSize);
+            Head = new Rectangle(3 * GridSize, 0 * GridSize, GridSize, GridSize);
+            Corner = new Rectangle(1 * GridSize, 0 * GridSize, GridSize, GridSize);
+            Mid1 = new Rectangle(0 * GridSize, 0 * GridSize, GridSize, GridSize);
+            Mid2 = new Rectangle(1 * GridSize, 1 * GridSize, GridSize, GridSize);
+            MainColor = new Color(110, 48, 45);
         }
 
         public Direction Facing
@@ -42,6 +45,10 @@ namespace yawn
         public Vector2 Position {
             get {
                 return HeadPosition;
+            }
+            set
+            {
+                HeadPosition = value;
             }
         }
 
@@ -97,7 +104,7 @@ namespace yawn
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Texture2D Tile, SpriteFont Font)
         {
             SpriteEffects FlipSection;
-            Rectangle TileSection = MidSection;
+            Rectangle TileSection = Mid1;
             Direction PrevDir = CameFrom.Opposite();
             float Rotation = 0.0f;
             
@@ -109,7 +116,7 @@ namespace yawn
             {
                 FlipHead = SpriteEffects.FlipVertically;
             }
-            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), HeadSection, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
+            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), Head, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
 
 
             // Draw the sections  
@@ -124,7 +131,7 @@ namespace yawn
                 if (i == 0)
                 {
                     // if there is no previous position, print the end section
-                    TileSection = EndSection;
+                    TileSection = Tail;
                 }
                 else {
                     
@@ -134,12 +141,12 @@ namespace yawn
                         if ((SectionPositions[i - 1].X == SectionPositions[i + 1].X) || (SectionPositions[i - 1].Y == SectionPositions[i + 1].Y))
                         {
                             // if the previous position and the next position share an axis print a midsection
-                            TileSection = MidSection;
+                            TileSection = Mid1;
                         }
                         else
                         {
                             // If the previous position and the next position are kitty corner, print a corner
-                            TileSection = TurnSection;
+                            TileSection = Corner;
 
                             // Determine if the tile needs to be flipped
                             Rotation += FindExtraRotation(SectionPositions[i - 1], SectionPositions[i], SectionPositions[i + 1]);
@@ -150,11 +157,11 @@ namespace yawn
                         // Check the head position against the last section position
                         if (SectionPositions[i - 1].X == HeadPosition.X || SectionPositions[i - 1].Y == HeadPosition.Y)
                         {
-                            TileSection = MidSection;
+                            TileSection = Mid1;
                         }
                         else
                         {
-                            TileSection = TurnSection;
+                            TileSection = Corner;
                             Rotation += FindExtraRotation(SectionPositions[i - 1], SectionPositions[i], HeadPosition);
                         }
                     }
@@ -276,6 +283,27 @@ namespace yawn
             else
             {
                 return false;
+            }
+        }
+
+        public void WrapPosition(int BoardWidth, int BoardHeight)
+        {
+            if (HeadPosition.X < 0)
+            {
+                HeadPosition.X = BoardWidth;
+            }
+            else if (HeadPosition.X > BoardWidth)
+            {
+                HeadPosition.X = 0;
+            }
+
+            if (HeadPosition.Y < 0)
+            {
+                HeadPosition.Y = BoardHeight;
+            }
+            else if (HeadPosition.Y > BoardHeight)
+            {
+                HeadPosition.Y = 0;
             }
         }
     }
