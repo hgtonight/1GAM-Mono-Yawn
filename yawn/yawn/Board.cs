@@ -24,13 +24,13 @@ namespace yawn
             GridSize = TileSize;
             Block = new Rectangle(0 * GridSize, 1 * GridSize, GridSize, GridSize);
 
-            if (random != 0)
+            if (random == 0)
             {
-                GenerateRandomLevel(random);
+                GenerateStandardLevel();
             }
             else
             {
-                GenerateStandardLevel();
+                GenerateRandomLevel(random);
             }
         }
 
@@ -71,14 +71,11 @@ namespace yawn
 
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Texture2D Tile, SpriteFont Font)
         {
-            spriteBatch.Begin();
             for (int i = BlockPositions.Count - 1; i >= 0; i--)
             {
                 // Actually print the section with the proper rotation
                 spriteBatch.Draw(Tile, new Vector2(BlockPositions[i].X * GridSize, BlockPositions[i].Y * GridSize), Block, Color.White);
             }
-
-            spriteBatch.End();
         }
 
         public bool Collides(Vector2 Position)
