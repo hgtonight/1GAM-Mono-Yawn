@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Board.cs" />
+    <Compile Include="Food.cs" />
     <Compile Include="Direction.cs" />
     <Compile Include="Yawn.cs" />
     <Compile Include="Program.cs" />
