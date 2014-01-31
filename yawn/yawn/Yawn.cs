@@ -16,40 +16,39 @@ namespace yawn
     /// </summary>
     public class Yawn : Game
     {
-        const int BoardWidth = 48;
-        const int BoardHeight = 22;
+        const int BoardWidth = 50;
+        const int BoardHeight = 30;
         const int InitialSpeed = 10; // Speed represents number of ticks between worm updates
         const int GridSize = 16; // size in pixels each grid section is
         static int Ticks = 0;
 
-        Color BgColor;
+        Color BgColor, MenuColor;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         Worm Worm;
         Board Board;
+        Food Food;
         int Points;
         bool Paused, GameOver;
         float GameSpeed;
-        Texture2D SpriteSheet, DaklutzLogo;
-        Rectangle Block, Cherry, Banana;
+        Texture2D SpriteSheet, DaklutzLogo, ColorTexture;
         SpriteFont Font;
-        Vector3 Food;
-
+        Vector2 LogoPosition, TextPosition;
+        
         public Yawn()
             : base()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             Worm = new Worm(GridSize);
-            Board = new Board(BoardWidth, BoardHeight, GridSize, 50);
+            Board = new Board(BoardWidth, BoardHeight, GridSize, 12);
+            Food = new Food(GridSize);
             GameSpeed = InitialSpeed;
             Points = 0;
             Paused = true;
             GameOver = false;
             BgColor = new Color(68, 34, 9);
-            Food = new Vector3(0, 0, 1);
-            Banana = new Rectangle(2 * GridSize, 1 * GridSize, GridSize, GridSize);
-            Cherry = new Rectangle(3 * GridSize, 1 * GridSize, GridSize, GridSize);
+            MenuColor = Color.DarkGreen;
         }
 
         /// <summary>
@@ -77,6 +76,11 @@ namespace yawn
             Font = Content.Load<SpriteFont>("PressStart2P");
             SpriteSheet = Content.Load<Texture2D>("sprites");
             DaklutzLogo = Content.Load<Texture2D>("daklutz");
+            ColorTexture = new Texture2D(GraphicsDevice, 1, 1);
+            ColorTexture.SetData(new Color[] { Color.White });
+
+            LogoPosition = new Vector2((BoardWidth * GridSize / 2) - (DaklutzLogo.Width / 2), (BoardHeight * GridSize / 2) - (DaklutzLogo.Height / 2));
+            TextPosition = new Vector2(BoardWidth * GridSize / 2, LogoPosition.Y + DaklutzLogo.Height);
         }
 
         /// <summary>
@@ -156,31 +160,32 @@ namespace yawn
                     GameOver = true;
                 }
 
-                // Check for collision with food
-                if (Food.X != 0)
+                // Respawn food if needed
+                if(Food.IsEaten())
                 {
-                    if (Worm.Position.X == Food.X && Worm.Position.Y == Food.Y)
-                    {
-                        Worm.Eat((int)Food.Z);
-                        Points += (int)Food.Z;
-                        Food.Z++;
-                        Food.X = 0;
-                        // speed up the game
-                        if (GameSpeed > 1 && Food.Z % 4 == 0)
-                        {
-                            GameSpeed--;
-                        }
-                    }
-                }
-                else
-                {
-                    // respawn food
+                    Vector2 NewPosition = new Vector2(-1, -1);
                     Random random = new Random();
                     do
                     {
-                        Food.X = random.Next(1, BoardWidth);
-                        Food.Y = random.Next(1, BoardHeight);
-                    } while (Worm.SectionHere(Food));
+                        NewPosition.X = random.Next(0, BoardWidth);
+                        NewPosition.Y = random.Next(0, BoardHeight);
+                    } while (Worm.Collides(NewPosition) || Board.Collides(NewPosition));
+
+                    Food.Respawn(NewPosition);
+                }
+
+                // Check for collision with food
+                if (Food.Collides(Worm.Position))
+                {
+                    Worm.Eat(Food.Potency());
+                    Points += Food.Potency();
+                    
+                    // speed up the game
+                    if (GameSpeed > 1 && Food.Potency() % 4 == 0)
+                    {
+                        GameSpeed--;
+                    }
+                    Food.Devoured();
                 }
             }
             base.Update(gameTime);
@@ -192,38 +197,29 @@ namespace yawn
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            Vector2 PointOffset = new Vector2(Font.MeasureString(Points.ToString()).Length() / 2, 0);
             GraphicsDevice.Clear(BgColor);
 
             // Render the HUD
             spriteBatch.Begin();
-            //spriteBatch.DrawString(Font, gameTime.TotalGameTime.ToString(), new Vector2(1, 1), Color.Black);
 
-            spriteBatch.DrawString(Font, "GameOver: " + GameOver.ToString(), new Vector2(1, (BoardHeight + 1) * GridSize + 1), Color.Black);
-            spriteBatch.DrawString(Font, "Paused: " + Paused.ToString(), new Vector2(1, (BoardHeight + 1) * GridSize + 19), Color.Black);
-            spriteBatch.DrawString(Font, "X: " + Worm.Position.X.ToString(), new Vector2(1, (BoardHeight + 1) * GridSize + 37), Color.Black);
-            spriteBatch.DrawString(Font, "Y: " + Worm.Position.Y.ToString(), new Vector2(1, (BoardHeight + 1) * GridSize + 55), Color.Black);
-            spriteBatch.DrawString(Font, "Food.X: " + Food.X.ToString(), new Vector2(200, (BoardHeight + 1) * GridSize + 37), Color.Black);
-            spriteBatch.DrawString(Font, "Food.Y: " + Food.Y.ToString(), new Vector2(200, (BoardHeight + 1) * GridSize + 55), Color.Black);
-            spriteBatch.DrawString(Font, "Food Worth: " + Food.Z.ToString(), new Vector2(200, (BoardHeight + 1) * GridSize + 73), Color.Black);
-            spriteBatch.DrawString(Font, "Angle: " + Worm.Facing.RotationAngle().ToString(), new Vector2(400, (BoardHeight + 1) * GridSize + 73), Color.Black);
-            spriteBatch.DrawString(Font, "Points: " + Points.ToString(), new Vector2(1, (BoardHeight + 1) * GridSize + 73), Color.Black);
-
-            // Render the food
-            spriteBatch.Draw(SpriteSheet, new Vector2(Food.X * GridSize, Food.Y * GridSize), Cherry, Color.White);
+            spriteBatch.Draw(DaklutzLogo, LogoPosition, Color.White * 0.25f);
+            spriteBatch.DrawString(Font, Points.ToString(), TextPosition - PointOffset, Color.Black * 0.25f);
+            
+            // Render the game entities if we are playing
+            if (Paused == false)
+            {
+                Board.Draw(gameTime, spriteBatch, SpriteSheet, Font);
+                Worm.Draw(gameTime, spriteBatch, SpriteSheet, Font);
+                Food.Draw(gameTime, spriteBatch, SpriteSheet, Font);
+            }
+            else
+            {
+                spriteBatch.Draw(ColorTexture, new Rectangle(0, 0, BoardWidth, BoardHeight), MenuColor * 0.25f);
+                spriteBatch.DrawString(Font, "PAUSED", TextPosition, Color.White);
+            }
 
             spriteBatch.End();
-
-            // Render the board
-            Board.Draw(gameTime, spriteBatch, SpriteSheet, Font);
-            
-            // Render the worm
-            //if (Paused == false)
-            //{
-                Worm.Draw(gameTime, spriteBatch, SpriteSheet, Font);
-            //}
-
-            // Render the food
-
             base.Draw(gameTime);
         }
     }

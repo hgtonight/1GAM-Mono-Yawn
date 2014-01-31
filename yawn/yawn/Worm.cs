@@ -23,7 +23,7 @@ namespace yawn
         {
             HeadPosition = new Vector2(5, 5);
             SectionPositions = new List<Vector2>();
-            Length = 10;
+            Length = 4;
             CameFrom = Direction.WEST;
             GridSize = TileSize;
             Tail = new Rectangle(2 * GridSize, 0 * GridSize, GridSize, GridSize);
@@ -107,8 +107,6 @@ namespace yawn
             Rectangle TileSection = Mid1;
             Direction PrevDir = CameFrom.Opposite();
             float Rotation = 0.0f;
-            
-            spriteBatch.Begin();
 
             // Draw the head
             SpriteEffects FlipHead = SpriteEffects.None;
@@ -167,6 +165,24 @@ namespace yawn
                     }
                 }
 
+                // If we are printing a mid section, change it for variation
+                if(TileSection.Equals(Mid1))
+                {
+                    // Figure out which section we want to use
+                    if ((SectionPositions[i].X + SectionPositions[i].Y) % 2 > 0)
+                    {
+                        TileSection = Mid2;
+                    }
+
+                    // Figure out if we want to flip the section
+                    if (SectionPositions[i].X % 2 > 0 || SectionPositions[i].Y % 2 > 0)
+                    {
+                        FlipSection = SpriteEffects.FlipHorizontally;
+                    }
+                }
+
+
+
                 // Actually print the section with the proper rotation
                 spriteBatch.Draw(Tile, new Vector2(SectionPositions[i].X * GridSize + GridSize / 2, SectionPositions[i].Y * GridSize + GridSize / 2), TileSection, Color.Pink, Rotation, new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipSection, 0.0f);
                 //spriteBatch.DrawString(Font, (i % 10).ToString(), new Vector2(SectionPositions[i].X * GridSize, SectionPositions[i].Y * GridSize), Color.Black);
@@ -191,10 +207,7 @@ namespace yawn
                         PrevDir = Direction.SOUTH;
                     }
                 }
-                
             }
-
-            spriteBatch.End();
         }
 
         private float FindExtraRotation(Vector2 PreviousPos, Vector2 CurrPos, Vector2 NextPos)
@@ -274,9 +287,13 @@ namespace yawn
             return 0.0f;
         }
 
-        public bool SectionHere(Vector3 Food)
+        public bool Collides(Vector2 Position)
         {
-            if (SectionPositions.Exists(x => x.X == Food.X && x.Y == Food.Y))
+            if (SectionPositions.Exists(x => x.X == Position.X && x.Y == Position.Y))
+            {
+                return true;
+            }
+            else if (HeadPosition.Equals(Position))
             {
                 return true;
             }
