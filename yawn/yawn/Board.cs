@@ -24,13 +24,60 @@ namespace yawn
             GridSize = TileSize;
             Block = new Rectangle(0 * GridSize, 1 * GridSize, GridSize, GridSize);
 
-            if (random == 0)
+            switch(random)
             {
-                GenerateStandardLevel();
+                case 0:
+                    GenerateStandardLevel();
+                    break;
+                case -1:
+                    GenerateBlockyLevel();
+                    break;
+                case -2:
+                    GenerateWrappedLevel();
+                    break;
+                default:
+                    GenerateRandomLevel(random);
+                    break;
             }
-            else
+        }
+
+        private void GenerateWrappedLevel()
+        {
+            int j = 0;
+            for (int i = 0; i < Width; i++)
             {
-                GenerateRandomLevel(random);
+                j++;
+                    if(j % 2 == 1 || i == Width - 1)
+                    {
+                        BlockPositions.Add(new Vector2(i, 0));
+                        BlockPositions.Add(new Vector2(i, Height - 1));
+                    }
+            }
+            
+            j = 0;
+            for (int i = 0; i < Height; i++)
+            {
+                j++;
+                if (j % 2 == 1 || j == Height - 1)
+                {
+                    BlockPositions.Add(new Vector2(0, i));
+                    BlockPositions.Add(new Vector2(Width - 1, i));
+                }
+            }
+        }
+
+        private void GenerateBlockyLevel()
+        {
+            // This is a level that has a block every other position
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    if (i % 2 == 1 && j % 2 == 1)
+                    {
+                        BlockPositions.Add(new Vector2(i, j));
+                    }
+                }
             }
         }
 
@@ -48,14 +95,14 @@ namespace yawn
         }
 
         private void GenerateStandardLevel() {
-            for (int i = 0; i <= Width; i++)
+            for (int i = 0; i < Width; i++)
             {
-                for (int j = 0; j <= Height; j++)
+                for (int j = 0; j < Height; j++)
                 {
                     if (i == 0 ||
-                        i == Width ||
+                        i == Width - 1 ||
                         j == 0 ||
-                        j == Height)
+                        j == Height - 1)
                     {
                         BlockPositions.Add(new Vector2(i, j));
                     }
@@ -73,8 +120,7 @@ namespace yawn
         {
             for (int i = BlockPositions.Count - 1; i >= 0; i--)
             {
-                // Actually print the section with the proper rotation
-                spriteBatch.Draw(Tile, new Vector2(BlockPositions[i].X * GridSize, BlockPositions[i].Y * GridSize), Block, Color.White);
+                spriteBatch.Draw(Tile, new Vector2(BlockPositions[i].X * GridSize, BlockPositions[i].Y * GridSize), Block, new Color(68, 34, 9));
             }
         }
 

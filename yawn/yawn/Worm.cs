@@ -21,7 +21,7 @@ namespace yawn
 
         public Worm(int TileSize)
         {
-            HeadPosition = new Vector2(5, 5);
+            HeadPosition = new Vector2(6, 6);
             SectionPositions = new List<Vector2>();
             Length = 4;
             CameFrom = Direction.WEST;
@@ -114,7 +114,7 @@ namespace yawn
             {
                 FlipHead = SpriteEffects.FlipVertically;
             }
-            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), Head, Color.Red, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
+            spriteBatch.Draw(Tile, new Vector2(HeadPosition.X * GridSize + GridSize / 2, HeadPosition.Y * GridSize + GridSize / 2), Head, Color.Pink, CameFrom.Opposite().RotationAngle(), new Vector2(GridSize / 2, GridSize / 2), 1.0f, FlipHead, 0.0f);
 
 
             // Draw the sections  

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
@@ -33,6 +35,7 @@ namespace yawn
         float GameSpeed;
         Texture2D SpriteSheet, DaklutzLogo, ColorTexture;
         SpriteFont Font;
+        SoundEffect Eat, Impact;
         Vector2 LogoPosition, TextPosition;
         
         public Yawn()
@@ -40,8 +43,14 @@ namespace yawn
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            ResetGame(0);
+            GameOver = true;
+        }
+
+        private void ResetGame(int Type)
+        {
+            Board = new Board(BoardWidth, BoardHeight, GridSize, Type);
             Worm = new Worm(GridSize);
-            Board = new Board(BoardWidth, BoardHeight, GridSize, 12);
             Food = new Food(GridSize);
             GameSpeed = InitialSpeed;
             Points = 0;
@@ -73,6 +82,8 @@ namespace yawn
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            Eat = Content.Load<SoundEffect>("eat");
+            Impact = Content.Load<SoundEffect>("impact1");
             Font = Content.Load<SpriteFont>("PressStart2P");
             SpriteSheet = Content.Load<Texture2D>("sprites");
             DaklutzLogo = Content.Load<Texture2D>("daklutz");
@@ -123,16 +134,20 @@ namespace yawn
             {
                 // Update that worm
                 List<Direction> Dirs = new List<Direction>();
-                if(Keyboard.GetState().IsKeyDown(Keys.Up)) {
+                if (Keyboard.GetState().IsKeyDown(Keys.Up))
+                {
                     Dirs.Add(Direction.NORTH);
                 }
-                if(Keyboard.GetState().IsKeyDown(Keys.Down)) {
+                if (Keyboard.GetState().IsKeyDown(Keys.Down))
+                {
                     Dirs.Add(Direction.SOUTH);
                 }
-                if(Keyboard.GetState().IsKeyDown(Keys.Left)) {
+                if (Keyboard.GetState().IsKeyDown(Keys.Left))
+                {
                     Dirs.Add(Direction.WEST);
                 }
-                if(Keyboard.GetState().IsKeyDown(Keys.Right)) {
+                if (Keyboard.GetState().IsKeyDown(Keys.Right))
+                {
                     Dirs.Add(Direction.EAST);
                 }
 
@@ -158,10 +173,11 @@ namespace yawn
                 if (Board.Collides(Worm.Position))
                 {
                     GameOver = true;
+                    Impact.Play();
                 }
 
                 // Respawn food if needed
-                if(Food.IsEaten())
+                if (Food.IsEaten())
                 {
                     Vector2 NewPosition = new Vector2(-1, -1);
                     Random random = new Random();
@@ -178,14 +194,36 @@ namespace yawn
                 if (Food.Collides(Worm.Position))
                 {
                     Worm.Eat(Food.Potency());
-                    Points += Food.Potency();
-                    
+                    Points++;
+
                     // speed up the game
                     if (GameSpeed > 1 && Food.Potency() % 4 == 0)
                     {
                         GameSpeed--;
                     }
                     Food.Devoured();
+                    Eat.Play();
+                }
+            }
+            else
+            {
+                // Game over
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                {
+                    Exit();
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.Up) ) {
+                    ResetGame(0);
+                }
+                else if(Keyboard.GetState().IsKeyDown(Keys.Down) ) {
+                    ResetGame(-1);
+                }
+                else if(Keyboard.GetState().IsKeyDown(Keys.Left) ) {
+                    ResetGame(-2);
+                }
+                else if(Keyboard.GetState().IsKeyDown(Keys.Right))
+                {
+                    ResetGame(50);
                 }
             }
             base.Update(gameTime);
@@ -204,19 +242,34 @@ namespace yawn
             spriteBatch.Begin();
 
             spriteBatch.Draw(DaklutzLogo, LogoPosition, Color.White * 0.25f);
-            spriteBatch.DrawString(Font, Points.ToString(), TextPosition - PointOffset, Color.Black * 0.25f);
             
             // Render the game entities if we are playing
-            if (Paused == false)
+            if (Paused == false && GameOver == false)
             {
+                spriteBatch.DrawString(Font, Points.ToString(), TextPosition - PointOffset, Color.Black * 0.25f);
                 Board.Draw(gameTime, spriteBatch, SpriteSheet, Font);
                 Worm.Draw(gameTime, spriteBatch, SpriteSheet, Font);
                 Food.Draw(gameTime, spriteBatch, SpriteSheet, Font);
             }
+            else if (GameOver == true)
+            {
+                Vector2 GameOverOffset = new Vector2(Font.MeasureString("GAME OVER").Length() / 2, 0);
+                spriteBatch.Draw(ColorTexture, new Rectangle(0, 0, BoardWidth * GridSize, BoardHeight * GridSize), Color.DarkBlue * 0.25f);
+                spriteBatch.Draw(ColorTexture, new Rectangle(0, (int)TextPosition.Y - 25, BoardWidth * GridSize, 100), Color.DarkBlue * 0.25f);
+                spriteBatch.DrawString(Font, "GAME OVER", TextPosition - GameOverOffset, Color.White);
+                GameOverOffset = new Vector2(Font.MeasureString("FINAL SCORE").Length() / 2, -25);
+                spriteBatch.DrawString(Font, "FINAL SCORE", TextPosition - GameOverOffset, Color.White);
+                GameOverOffset = new Vector2(Font.MeasureString(Points.ToString()).Length() / 2, -50);
+                spriteBatch.DrawString(Font, Points.ToString(), TextPosition - GameOverOffset, Color.White);
+
+            }
             else
             {
-                spriteBatch.Draw(ColorTexture, new Rectangle(0, 0, BoardWidth, BoardHeight), MenuColor * 0.25f);
-                spriteBatch.DrawString(Font, "PAUSED", TextPosition, Color.White);
+                // Default to paused screen
+                Vector2 PausedOffset = new Vector2(Font.MeasureString("PAUSED").Length() / 2, 0);
+                spriteBatch.Draw(ColorTexture, new Rectangle(0, 0, BoardWidth * GridSize, BoardHeight * GridSize), Color.DarkBlue * 0.25f);
+                spriteBatch.Draw(ColorTexture, new Rectangle(0, (int)TextPosition.Y - 25, BoardWidth * GridSize, 75), Color.DarkBlue * 0.25f);
+                spriteBatch.DrawString(Font, "PAUSED", TextPosition - PausedOffset, Color.White);
             }
 
             spriteBatch.End();
